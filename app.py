@@ -10,7 +10,7 @@ zona_col = pytz.timezone("America/Bogota")
 # Config Streamlit
 st.set_page_config(page_title="App Registro de Llamadas", layout="centered")
 
-# Conexión Mongo
+# Conexión a MongoDB
 MONGO_URI = st.secrets["mongo_uri"]
 client = pymongo.MongoClient(MONGO_URI)
 db = client["registro_llamadas_db"]
@@ -75,8 +75,6 @@ def terminar_llamada():
             }}
         )
         st.session_state["llamada_activa"] = None
-        st.session_state["estado_llamada"] = "normal"
-        st.session_state["percepcion_emoji"] = "feliz"
 
 def on_vista_change():
     st.session_state["vista"] = st.session_state["sel_vista"]
@@ -124,14 +122,11 @@ if st.session_state["vista"] == "Llamada en curso":
             key="estado_llamada"
         )
 
-        if estado == "normal":
-            st.success(f"Estado seleccionado: {estado_opciones[estado]}")
-        elif estado == "caida":
-            st.info(f"Estado seleccionado: {estado_opciones[estado]}")
-        elif estado == "corte":
-            st.error(f"Estado seleccionado: {estado_opciones[estado]}")
-
-        if estado != "caida":
+        # Si cambia a caída, limpiar percepción y ocultar dropdown
+        if estado == "caida":
+            st.session_state["percepcion_emoji"] = None
+            st.info("La percepción no aplica para estado 'Caída'")
+        else:
             percepcion_opciones = {
                 "feliz": "😃 Feliz",
                 "meh": "😐 Meh",
@@ -144,15 +139,23 @@ if st.session_state["vista"] == "Llamada en curso":
                 key="percepcion_emoji"
             )
 
-            if percepcion == "feliz":
-                st.success(f"Emoji seleccionado: {percepcion_opciones[percepcion]}")
-            elif percepcion == "meh":
-                st.info(f"Emoji seleccionado: {percepcion_opciones[percepcion]}")
-            elif percepcion == "enojado":
-                st.error(f"Emoji seleccionado: {percepcion_opciones[percepcion]}")
-        else:
-            st.info("La percepción no aplica para llamadas de estado 'Caída'")
-            st.session_state["percepcion_emoji"] = None
+        # Mostrar estado seleccionado destacado
+        if estado == "normal":
+            st.success(f"Estado seleccionado: {estado_opciones[estado]}")
+        elif estado == "caida":
+            st.info(f"Estado seleccionado: {estado_opciones[estado]}")
+        elif estado == "corte":
+            st.error(f"Estado seleccionado: {estado_opciones[estado]}")
+
+        # Mostrar percepción seleccionado destacado solo si aplica
+        if estado != "caida" and st.session_state.get("percepcion_emoji"):
+            perc = st.session_state["percepcion_emoji"]
+            if perc == "feliz":
+                st.success(f"Emoji seleccionado: {percepcion_opciones[perc]}")
+            elif perc == "meh":
+                st.info(f"Emoji seleccionado: {percepcion_opciones[perc]}")
+            elif perc == "enojado":
+                st.error(f"Emoji seleccionado: {percepcion_opciones[perc]}")
 
         if st.button("Terminar llamada"):
             terminar_llamada()
