@@ -4,13 +4,13 @@ from datetime import datetime, timedelta
 import pytz
 import pandas as pd
 
-# Configuración zona horaria Colombia
+# Zona horaria Colombia
 zona_col = pytz.timezone("America/Bogota")
 
 # Config Streamlit
 st.set_page_config(page_title="App Registro de Llamadas", layout="centered")
 
-# Conexión a MongoDB - URI en st.secrets
+# Conexión MongoDB - URI guardado en st.secrets
 MONGO_URI = st.secrets["mongo_uri"]
 client = pymongo.MongoClient(MONGO_URI)
 db = client["registro_llamadas_db"]
@@ -101,10 +101,15 @@ if st.session_state["vista"] == "Llamada en curso":
     }))
     num_llamadas = len(llamadas_hoy)
     aht = calcular_aht(llamadas_hoy)
-    st.markdown(f"**Número de llamadas hoy:** {num_llamadas}  \n**Average Handle Time (AHT):** {aht}")
+
+    # Convenciones compactas en una línea arriba
+    st.markdown("🔵 Caída | 🟡 Normal | 🔴 Tuve que finalizarla")
+
+    # Resumen del día
+    st.markdown(f"**Número de llamadas hoy:** {num_llamadas}  
+**Average Handle Time (AHT):** {aht}")
 
     st.subheader("Llamada en curso")
-
     if st.session_state["llamada_activa"]:
         llamada = col_llamadas.find_one({"_id": st.session_state["llamada_activa"]})
         inicio_local = llamada["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
@@ -141,7 +146,7 @@ if st.session_state["vista"] == "Llamada en curso":
                 if st.button("😐", key="emoji_meh"):
                     st.session_state["percepcion_emoji"] = "meh"
             with colf3:
-                if st.button("😡 ", key="emoji_enojado"):
+                if st.button("😡", key="emoji_enojado"):
                     st.session_state["percepcion_emoji"] = "enojado"
             percep = st.session_state["percepcion_emoji"]
             if percep:
@@ -156,13 +161,6 @@ if st.session_state["vista"] == "Llamada en curso":
             iniciar_llamada()
             st.rerun()
 
-    st.markdown("---")
-    st.markdown("""
-    **Convenciones:**  
-    🔵 Entrada caída: llamada no atendida o caída sin hablar  
-    🟡 Llamada normal: llamada atendida con posibilidad de calificación  
-    🔴 Tuve que finalizarla: llamada que cortó usted o por inconveniente  
-    """)
 else:
     st.subheader("Registros históricos de llamadas")
 
