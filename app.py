@@ -30,7 +30,7 @@ def formatear_duracion(inicio, fin):
     partes.append(f"{segundos}s")
     return " ".join(partes)
 
-# Función para calcular Average Handle Time (promedio duración) de llamadas finalizadas
+# Función para calcular Average Handle Time (promedio duración) de llamadas finalizadas, formato legible
 def calcular_aht(llamadas):
     if not llamadas:
         return "0h 0m 0s"  # Retorna cero cuando no hay llamadas
@@ -41,6 +41,16 @@ def calcular_aht(llamadas):
     horas, rem = divmod(promedio.seconds, 3600)
     minutos, segundos = divmod(rem, 60)
     return f"{horas}h {minutos}m {segundos}s"
+
+# Función para calcular el Average Handle Time (AHT) pero en segundos
+def aht_en_segundos(llamadas):
+    if not llamadas:
+        return 0
+    total = timedelta()
+    for l in llamadas:
+        total += l["fin"] - l["inicio"]
+    segundos = int(total.total_seconds() / len(llamadas))
+    return segundos
 
 # Valores por defecto en sesion state para controlar estado de vista y llamada
 if "llamada_activa" not in st.session_state:
@@ -79,7 +89,6 @@ def terminar_llamada():
                 "emoji_percepcion": st.session_state["percepcion_emoji"]
             }}
         )
-        # Limpia el estado de llamada activa para indicar que no hay llamada en curso
         st.session_state["llamada_activa"] = None
 
 # Cambio de vista entre "Llamada en curso" y "Registros"
@@ -115,10 +124,12 @@ if st.session_state["vista"] == "Llamada en curso":
     # Calcular número de llamadas y promedio AHT del día
     num_llamadas = len(llamadas_hoy)
     aht = calcular_aht(llamadas_hoy)
+    aht_seg = aht_en_segundos(llamadas_hoy)
 
     # Mostrar métricas resumen en UI
     st.markdown(f"**Número de llamadas hoy:** {num_llamadas}")
     st.markdown(f"**Average Handle Time (AHT):** {aht}")
+    st.markdown(f"**AHT en segundos:** {aht_seg}")
 
     st.subheader("Llamada en curso")
 
@@ -202,10 +213,12 @@ else:  # Vista Registros históricos de llamadas
 
     # Calcular promedio AHT con todo el historial
     aht_total = calcular_aht(llamadas_finalizadas)
+    aht_total_seg = aht_en_segundos(llamadas_finalizadas)
 
     # Mostrar resumen total histórico
     st.markdown(f"**Número total de llamadas:** {num_total}")
     st.markdown(f"**Average Handle Time (AHT) total:** {aht_total}")
+    st.markdown(f"**AHT total en segundos:** {aht_total_seg}")
 
     registros = []
     # Preparar lista para mostrar tabla con datos locales y legibles
