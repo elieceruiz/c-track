@@ -96,6 +96,9 @@ st.selectbox(
     on_change=on_vista_change
 )
 
+# Título de la app
+st.title("Registro y Control de Llamadas")
+
 # Vista principal según selección de usuario
 if st.session_state["vista"] == "Llamada en curso":
     # Definir rango día actual en Colombia para filtrar documentos del día
