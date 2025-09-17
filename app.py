@@ -158,11 +158,11 @@ if st.session_state["vista"] == "Llamada en curso":
         if st.session_state["estado_llamada"]:
             if st.button("Terminar llamada", key="btn_terminar"):
                 terminar_llamada()
-                st.experimental_rerun()
+                st.rerun()
     else:
         if st.button("Iniciar llamada"):
             iniciar_llamada()
-            st.experimental_rerun()
+            st.rerun()
 
     st.markdown("---")
     st.markdown("""
