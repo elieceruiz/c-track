@@ -4,13 +4,23 @@ from datetime import datetime, timedelta
 import pytz
 import pandas as pd
 
+# Forzar columnas horizontales con scroll en móvil
+st.markdown("""
+<style>
+[data-testid="stVerticalBlock"] > div {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Zona horaria Colombia
 zona_col = pytz.timezone("America/Bogota")
 
-# Configuración Streamlit
+# Config Streamlit
 st.set_page_config(page_title="App Registro de Llamadas", layout="centered")
 
-# Conexión MongoDB - URI guardado en st.secrets
+# Conexión a MongoDB
 MONGO_URI = st.secrets["mongo_uri"]
 client = pymongo.MongoClient(MONGO_URI)
 db = client["registro_llamadas_db"]
@@ -102,10 +112,8 @@ if st.session_state["vista"] == "Llamada en curso":
     num_llamadas = len(llamadas_hoy)
     aht = calcular_aht(llamadas_hoy)
 
-    # Convenciones compactas arriba
     st.markdown("🔵 Caída | 🟡 Normal | 🔴 Tuve que finalizarla")
 
-    # Resumen día en dos líneas separadas para evitar error f-string
     st.markdown(f"**Número de llamadas hoy:** {num_llamadas}")
     st.markdown(f"**Average Handle Time (AHT):** {aht}")
 
@@ -116,7 +124,7 @@ if st.session_state["vista"] == "Llamada en curso":
         inicio_local = llamada["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
         st.write(f"Llamada iniciada el {inicio_local.strftime('%Y-%m-%d %H:%M:%S')}")
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns([1,1,1], gap="small")
         with col1:
             if st.button("🔵", key="btn_caida"):
                 st.session_state["estado_llamada"] = "caida"
@@ -139,7 +147,7 @@ if st.session_state["vista"] == "Llamada en curso":
 
         if estado in ["normal", "corte"]:
             st.write("Seleccione percepción:")
-            colf1, colf2, colf3 = st.columns(3)
+            colf1, colf2, colf3 = st.columns([1,1,1], gap="small")
             with colf1:
                 if st.button("😃", key="emoji_feliz"):
                     st.session_state["percepcion_emoji"] = "feliz"
