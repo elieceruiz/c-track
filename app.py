@@ -1,10 +1,10 @@
 import streamlit as st
 import pymongo
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 import pytz
 import pandas as pd
 
-# Zona horaria Colombia
+# Configurar zona horaria de Colombia
 zona_col = pytz.timezone("America/Bogota")
 
 # Config Streamlit
@@ -91,8 +91,12 @@ st.selectbox(
 st.title("Registro y Control de Llamadas")
 
 if st.session_state["vista"] == "Llamada en curso":
-    hoy_ini = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    hoy_fin = datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
+    
+    # Definir rango del día actual en zona Colombia
+    fecha_hoy = datetime.now(zona_col).date()
+    hoy_ini = zona_col.localize(datetime.combine(fecha_hoy, time.min))
+    hoy_fin = zona_col.localize(datetime.combine(fecha_hoy, time.max))
+    
     llamadas_hoy = list(col_llamadas.find({
         "inicio": {"$gte": hoy_ini, "$lte": hoy_fin},
         "fin": {"$ne": None}
@@ -107,8 +111,9 @@ if st.session_state["vista"] == "Llamada en curso":
 
     if st.session_state["llamada_activa"]:
         llamada = col_llamadas.find_one({"_id": st.session_state["llamada_activa"]})
-        inicio_local = llamada["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
-        st.write(f"Llamada iniciada el {inicio_local.strftime('%Y-%m-%d %H:%M:%S')}")
+        if llamada:
+            inicio_local = llamada["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
+            st.write(f"Llamada iniciada el {inicio_local.strftime('%Y-%m-%d %H:%M:%S')}")
 
         estado_opciones = {
             "caida": "🔵 Caída",
@@ -122,7 +127,6 @@ if st.session_state["vista"] == "Llamada en curso":
             key="estado_llamada"
         )
 
-        # Si cambia a caída, limpiar percepción y ocultar dropdown
         if estado == "caida":
             st.session_state["percepcion_emoji"] = None
             st.info("La percepción no aplica para estado 'Caída'")
@@ -139,7 +143,6 @@ if st.session_state["vista"] == "Llamada en curso":
                 key="percepcion_emoji"
             )
 
-        # Mostrar estado seleccionado destacado
         if estado == "normal":
             st.success(f"Estado seleccionado: {estado_opciones[estado]}")
         elif estado == "caida":
@@ -147,7 +150,6 @@ if st.session_state["vista"] == "Llamada en curso":
         elif estado == "corte":
             st.error(f"Estado seleccionado: {estado_opciones[estado]}")
 
-        # Mostrar percepción seleccionado destacado solo si aplica
         if estado != "caida" and st.session_state.get("percepcion_emoji"):
             perc = st.session_state["percepcion_emoji"]
             if perc == "feliz":
@@ -167,14 +169,17 @@ if st.session_state["vista"] == "Llamada en curso":
 
 else:
     st.subheader("Registros históricos de llamadas")
-
-    hoy_inicio = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    hoy_fin = datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
+    
+    # Usar mismo rango para historial de hoy
+    fecha_hoy = datetime.now(zona_col).date()
+    hoy_ini = zona_col.localize(datetime.combine(fecha_hoy, time.min))
+    hoy_fin = zona_col.localize(datetime.combine(fecha_hoy, time.max))
+    
     llamadas_hoy = list(col_llamadas.find({
-        "inicio": {"$gte": hoy_inicio, "$lte": hoy_fin},
+        "inicio": {"$gte": hoy_ini, "$lte": hoy_fin},
         "fin": {"$ne": None}
     }))
-
+    
     num_llamadas = len(llamadas_hoy)
     aht = calcular_aht(llamadas_hoy)
 
