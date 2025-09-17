@@ -7,7 +7,7 @@ import pandas as pd
 # Zona horaria Colombia
 zona_col = pytz.timezone("America/Bogota")
 
-# Config Streamlit
+# Configuración Streamlit
 st.set_page_config(page_title="App Registro de Llamadas", layout="centered")
 
 # Conexión MongoDB - URI guardado en st.secrets
@@ -102,14 +102,15 @@ if st.session_state["vista"] == "Llamada en curso":
     num_llamadas = len(llamadas_hoy)
     aht = calcular_aht(llamadas_hoy)
 
-    # Convenciones compactas en una línea arriba
+    # Convenciones compactas arriba
     st.markdown("🔵 Caída | 🟡 Normal | 🔴 Tuve que finalizarla")
 
-    # Resumen del día
-    st.markdown(f"**Número de llamadas hoy:** {num_llamadas}  
-**Average Handle Time (AHT):** {aht}")
+    # Resumen día en dos líneas separadas para evitar error f-string
+    st.markdown(f"**Número de llamadas hoy:** {num_llamadas}")
+    st.markdown(f"**Average Handle Time (AHT):** {aht}")
 
     st.subheader("Llamada en curso")
+
     if st.session_state["llamada_activa"]:
         llamada = col_llamadas.find_one({"_id": st.session_state["llamada_activa"]})
         inicio_local = llamada["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
