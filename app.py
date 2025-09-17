@@ -45,7 +45,7 @@ if "llamada_activa" not in st.session_state:
 if "estado_llamada" not in st.session_state:
     st.session_state["estado_llamada"] = "normal"
 if "percepcion_emoji" not in st.session_state:
-    st.session_state["percepcion_emoji"] = None
+    st.session_state["percepcion_emoji"] = "feliz"
 if "vista" not in st.session_state:
     st.session_state["vista"] = "Llamada en curso"
 
@@ -61,7 +61,7 @@ def iniciar_llamada():
         result = col_llamadas.insert_one(llamada)
         st.session_state["llamada_activa"] = result.inserted_id
         st.session_state["estado_llamada"] = "normal"
-        st.session_state["percepcion_emoji"] = None
+        st.session_state["percepcion_emoji"] = "feliz"
 
 def terminar_llamada():
     if st.session_state["llamada_activa"]:
@@ -76,7 +76,7 @@ def terminar_llamada():
         )
         st.session_state["llamada_activa"] = None
         st.session_state["estado_llamada"] = "normal"
-        st.session_state["percepcion_emoji"] = None
+        st.session_state["percepcion_emoji"] = "feliz"
 
 def on_vista_change():
     st.session_state["vista"] = st.session_state["sel_vista"]
@@ -102,8 +102,6 @@ if st.session_state["vista"] == "Llamada en curso":
     num_llamadas = len(llamadas_hoy)
     aht = calcular_aht(llamadas_hoy)
 
-    st.markdown("🔵 Caída | 🟡 Normal | 🔴 Tuve que finalizarla")
-
     st.markdown(f"**Número de llamadas hoy:** {num_llamadas}")
     st.markdown(f"**Average Handle Time (AHT):** {aht}")
 
@@ -114,49 +112,40 @@ if st.session_state["vista"] == "Llamada en curso":
         inicio_local = llamada["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
         st.write(f"Llamada iniciada el {inicio_local.strftime('%Y-%m-%d %H:%M:%S')}")
 
-        # Botones estado
-        col1, col2, col3 = st.columns([1,1,1], gap="small")
-        with col1:
-            if st.button("🔵", key="btn_caida"):
-                st.session_state["estado_llamada"] = "caida"
-                st.session_state["percepcion_emoji"] = None
-        with col2:
-            if st.button("🟡", key="btn_normal"):
-                st.session_state["estado_llamada"] = "normal"
-        with col3:
-            if st.button("🔴", key="btn_corte"):
-                st.session_state["estado_llamada"] = "corte"
-                st.session_state["percepcion_emoji"] = None
+        estado_opciones = {
+            "caida": "🔵 Caída",
+            "normal": "🟡 Normal",
+            "corte": "🔴 Finalizada"
+        }
+        estado = st.selectbox(
+            "Estado de la llamada:",
+            options=list(estado_opciones.keys()),
+            index=list(estado_opciones.keys()).index(st.session_state["estado_llamada"]),
+            format_func=lambda x: estado_opciones[x],
+            key="estado_llamada"
+        )
 
-        estado = st.session_state["estado_llamada"]
-        if estado == "normal":
-            st.warning(f"Estado seleccionado: {estado}")
-        elif estado == "caida":
-            st.info(f"Estado seleccionado: {estado}")
-        elif estado == "corte":
-            st.error(f"Estado seleccionado: {estado}")
+        if estado != "caida":
+            percepcion_opciones = {
+                "feliz": "😃 Feliz",
+                "meh": "😐 Meh",
+                "enojado": "😡 Enojado"
+            }
+            percepcion = st.selectbox(
+                "Percepción:",
+                options=list(percepcion_opciones.keys()),
+                index=list(percepcion_opciones.keys()).index(st.session_state.get("percepcion_emoji", "feliz")),
+                format_func=lambda x: percepcion_opciones[x],
+                key="percepcion_emoji"
+            )
+            st.markdown(f"Emoji seleccionado: {percepcion}")
+        else:
+            st.info("La percepción no aplica para llamadas de estado 'Caída'")
+            st.session_state["percepcion_emoji"] = None
 
-        # Botones percepción
-        if estado in ["normal", "corte"]:
-            st.write("Seleccione percepción:")
-            colf1, colf2, colf3 = st.columns([1,1,1], gap="small")
-            with colf1:
-                if st.button("😃", key="emoji_feliz"):
-                    st.session_state["percepcion_emoji"] = "feliz"
-            with colf2:
-                if st.button("😐", key="emoji_meh"):
-                    st.session_state["percepcion_emoji"] = "meh"
-            with colf3:
-                if st.button("😡", key="emoji_enojado"):
-                    st.session_state["percepcion_emoji"] = "enojado"
-            percep = st.session_state["percepcion_emoji"]
-            if percep:
-                st.markdown(f"Emoji seleccionado: {percep}")
-
-        if estado:
-            if st.button("Terminar llamada", key="btn_terminar"):
-                terminar_llamada()
-                st.rerun()
+        if st.button("Terminar llamada"):
+            terminar_llamada()
+            st.rerun()
     else:
         if st.button("Iniciar llamada"):
             iniciar_llamada()
