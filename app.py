@@ -4,19 +4,20 @@ from datetime import datetime, time, timedelta
 import pytz
 import pandas as pd
 
-# Configurar zona horaria de Colombia para convertir fechas UTC a hora local y para filtrar por día actual local
+# ---------------------------
+# Configuración inicial
+# ---------------------------
 zona_col = pytz.timezone("America/Bogota")
+st.set_page_config(page_title="📲 CallBoard", layout="centered")
 
-# Configuración inicial de Streamlit: título, layout centrado
-st.set_page_config(page_title="App Registro de Llamadas", layout="centered")
-
-# Conexión a la base de datos MongoDB usando URI almacenada en los secretos de Streamlit
 MONGO_URI = st.secrets["mongo_uri"]
 client = pymongo.MongoClient(MONGO_URI)
 db = client["registro_llamadas_db"]
 col_llamadas = db["llamadas"]
 
-# Función para formatear duración entre fechas en formato legible '0d 0h 1m 30s'
+# ---------------------------
+# Funciones auxiliares
+# ---------------------------
 def formatear_duracion(inicio, fin):
     duracion = fin - inicio
     dias = duracion.days
@@ -30,10 +31,9 @@ def formatear_duracion(inicio, fin):
     partes.append(f"{segundos}s")
     return " ".join(partes)
 
-# Función para calcular Average Handle Time (promedio duración) de llamadas finalizadas, formato legible
 def calcular_aht(llamadas):
     if not llamadas:
-        return "0h 0m 0s"  # Retorna cero cuando no hay llamadas
+        return "0h 0m 0s"
     total = timedelta()
     for l in llamadas:
         total += l["fin"] - l["inicio"]
@@ -42,7 +42,6 @@ def calcular_aht(llamadas):
     minutos, segundos = divmod(rem, 60)
     return f"{horas}h {minutos}m {segundos}s"
 
-# Función para calcular el Average Handle Time (AHT) pero en segundos
 def aht_en_segundos(llamadas):
     if not llamadas:
         return 0
@@ -52,17 +51,6 @@ def aht_en_segundos(llamadas):
     segundos = int(total.total_seconds() / len(llamadas))
     return segundos
 
-# Valores por defecto en sesion state para controlar estado de vista y llamada
-if "llamada_activa" not in st.session_state:
-    st.session_state["llamada_activa"] = None
-if "estado_llamada" not in st.session_state:
-    st.session_state["estado_llamada"] = "normal"
-if "percepcion_emoji" not in st.session_state:
-    st.session_state["percepcion_emoji"] = "feliz"
-if "vista" not in st.session_state:
-    st.session_state["vista"] = "Llamada en curso"
-
-# Función para iniciar una llamada: inserta registro con tiempo inicio UTC, estado y percepción vacíos
 def iniciar_llamada():
     if not st.session_state["llamada_activa"]:
         inicio_utc = datetime.utcnow()
@@ -77,7 +65,6 @@ def iniciar_llamada():
         st.session_state["estado_llamada"] = "normal"
         st.session_state["percepcion_emoji"] = "feliz"
 
-# Función para terminar llamada: actualiza registro con tiempo fin UTC, estado final y percepción seleccionada
 def terminar_llamada():
     if st.session_state["llamada_activa"]:
         fin_utc = datetime.utcnow()
@@ -91,11 +78,24 @@ def terminar_llamada():
         )
         st.session_state["llamada_activa"] = None
 
-# Cambio de vista entre "Llamada en curso" y "Registros"
 def on_vista_change():
     st.session_state["vista"] = st.session_state["sel_vista"]
 
-# Selector de vista principal
+# ---------------------------
+# Valores iniciales
+# ---------------------------
+if "llamada_activa" not in st.session_state:
+    st.session_state["llamada_activa"] = None
+if "estado_llamada" not in st.session_state:
+    st.session_state["estado_llamada"] = "normal"
+if "percepcion_emoji" not in st.session_state:
+    st.session_state["percepcion_emoji"] = "feliz"
+if "vista" not in st.session_state:
+    st.session_state["vista"] = "Llamada en curso"
+
+# ---------------------------
+# Selector de vista
+# ---------------------------
 vistas = ["Llamada en curso", "Registros"]
 st.selectbox(
     "Seleccione vista:",
@@ -105,123 +105,121 @@ st.selectbox(
     on_change=on_vista_change
 )
 
-# Título de la app
-st.title("Registro y Control de Llamadas")
-
-# Vista principal según selección de usuario
+# ---------------------------
+# Vista 1: Llamada en curso
+# ---------------------------
 if st.session_state["vista"] == "Llamada en curso":
-    # Definir rango día actual en Colombia para filtrar documentos del día
+    st.title("📲 CallBoard")
+    st.caption("Registro y control de llamadas — métricas claras y acciones rápidas")
+
+    # Definir rango del día actual
     fecha_hoy = datetime.now(zona_col).date()
     hoy_ini = zona_col.localize(datetime.combine(fecha_hoy, time.min))
     hoy_fin = zona_col.localize(datetime.combine(fecha_hoy, time.max))
 
-    # Filtra llamadas finalizadas que comenzaron dentro del día actual local
     llamadas_hoy = list(col_llamadas.find({
         "inicio": {"$gte": hoy_ini, "$lte": hoy_fin},
         "fin": {"$ne": None}
     }))
 
-    # Calcular número de llamadas y promedio AHT del día
     num_llamadas = len(llamadas_hoy)
     aht = calcular_aht(llamadas_hoy)
     aht_seg = aht_en_segundos(llamadas_hoy)
 
-    # Mostrar métricas resumen en UI
-    st.markdown(f"**Número de llamadas hoy:** {num_llamadas}")
-    st.markdown(f"**Average Handle Time (AHT):** {aht}")
-    st.markdown(f"**AHT en segundos:** {aht_seg}")
+    # Tarjetas métricas
+    col1, col2, col3 = st.columns(3)
+    col1.metric("📞 Llamadas hoy", num_llamadas)
+    col2.metric("⏱️ AHT", aht)
+    col3.metric("🔢 AHT (s)", aht_seg)
 
-    st.subheader("Llamada en curso")
+    # Barra de progreso contra meta
+    objetivo_seg = 300  # meta de ejemplo
+    progreso = min(1.0, aht_seg / objetivo_seg) if objetivo_seg > 0 else 0
+    st.progress(progreso)
+    st.caption(f"Progreso AHT vs objetivo ({objetivo_seg}s)")
+
+    st.divider()
+    st.subheader("🎛️ Control rápido")
 
     if st.session_state["llamada_activa"]:
         llamada = col_llamadas.find_one({"_id": st.session_state["llamada_activa"]})
         if llamada:
-            # Mostrar hora de inicio local convertida desde UTC
             inicio_local = llamada["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
-            st.write(f"Llamada iniciada el {inicio_local.strftime('%Y-%m-%d %H:%M:%S')}")
+            st.write(f"🔔 Llamada iniciada: **{inicio_local.strftime('%Y-%m-%d %H:%M:%S')}**")
 
-        # Opciones posibles para estado de llamada
-        estado_opciones = {
-            "caida": "🔵 Caída",
-            "normal": "🟡 Normal",
-            "corte": "🔴 Finalizada"
-        }
-        # Dropdown que actualiza estado en session_state
         estado = st.selectbox(
-            "Estado de la llamada:",
-            options=list(estado_opciones.keys()),
-            format_func=lambda x: estado_opciones[x],
+            "Estado:",
+            options=["caida", "normal", "corte"],
+            format_func=lambda x: {"caida":"🔵 Caída","normal":"🟡 Normal","corte":"🔴 Finalizada"}[x],
             key="estado_llamada"
         )
 
-        # Si el estado es "caida", no aplica percepción y se informa
         if estado == "caida":
             st.session_state["percepcion_emoji"] = None
-            st.info("La percepción no aplica para estado 'Caída'")
+            st.info("La percepción no aplica para llamadas caídas")
         else:
-            # Opciones para percepción de la llamada
-            percepcion_opciones = {
-                "feliz": "😃 Feliz",
-                "meh": "😐 Meh",
-                "enojado": "😡 Enojado"
-            }
-            # Dropdown que actualiza percepción en session_state
-            percepcion = st.selectbox(
+            st.selectbox(
                 "Percepción:",
-                options=list(percepcion_opciones.keys()),
-                format_func=lambda x: percepcion_opciones[x],
+                options=["feliz", "meh", "enojado"],
+                format_func=lambda x: {"feliz":"😃 Feliz","meh":"😐 Meh","enojado":"😡 Enojado"}[x],
                 key="percepcion_emoji"
             )
 
-        # Mostrar texto destacado según estado elegido
-        if estado == "normal":
-            st.success(f"Estado seleccionado: {estado_opciones[estado]}")
-        elif estado == "caida":
-            st.info(f"Estado seleccionado: {estado_opciones[estado]}")
-        elif estado == "corte":
-            st.error(f"Estado seleccionado: {estado_opciones[estado]}")
-
-        # Mostrar texto destacado según percepción si aplica
-        if estado != "caida" and st.session_state.get("percepcion_emoji"):
-            perc = st.session_state["percepcion_emoji"]
-            if perc == "feliz":
-                st.success(f"Emoji seleccionado: {percepcion_opciones[perc]}")
-            elif perc == "meh":
-                st.info(f"Emoji seleccionado: {percepcion_opciones[perc]}")
-            elif perc == "enojado":
-                st.error(f"Emoji seleccionado: {percepcion_opciones[perc]}")
-
-        # Botón para terminar llamada, guarda datos y reinicia estado llamada activa
-        if st.button("Terminar llamada"):
+        if st.button("⏹️ Terminar llamada"):
             terminar_llamada()
+            st.success("Llamada finalizada ✅")
             st.rerun()
     else:
-        # Botón para iniciar llamada crea registro y activa estado
-        if st.button("Iniciar llamada"):
+        if st.button("▶️ Iniciar llamada"):
             iniciar_llamada()
+            st.success("Llamada iniciada — ¡buena suerte! 🎧")
             st.rerun()
 
-else:  # Vista Registros históricos de llamadas
+    st.divider()
+    st.subheader("📈 Actividad por hora")
 
-    st.subheader("Registros históricos de llamadas")
+    if llamadas_hoy:
+        df_horas = pd.DataFrame([
+            {"hora": l["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col).hour}
+            for l in llamadas_hoy
+        ])
+        conteo = df_horas["hora"].value_counts().sort_index()
+        s = pd.Series(index=range(0,24), dtype=int)
+        for h in range(24):
+            s.loc[h] = int(conteo.get(h, 0))
+        s.index = [f"{h:02d}:00" for h in s.index]
+        st.bar_chart(s)
+    else:
+        st.info("Aún no hay llamadas finalizadas hoy.")
 
-    # Buscar todas las llamadas finalizadas en base de datos sin filtrar por fecha
+    st.divider()
+    ultima = col_llamadas.find_one({"fin": {"$ne": None}}, sort=[("fin", -1)])
+    if ultima:
+        perc = ultima.get("emoji_percepcion")
+        if perc == "feliz":
+            st.success("¡Bien! El cliente quedó contento 😃")
+        elif perc == "meh":
+            st.info("Quedó regular — revisa el caso 😐")
+        elif perc == "enojado":
+            st.error("Atención: hubo una experiencia negativa 😡")
+
+# ---------------------------
+# Vista 2: Registros históricos
+# ---------------------------
+else:
+    st.subheader("📒 Registros históricos de llamadas")
+
     llamadas_finalizadas = list(col_llamadas.find({"fin": {"$ne": None}}))
-
-    # Número total de llamadas finalizadas
     num_total = len(llamadas_finalizadas)
-
-    # Calcular promedio AHT con todo el historial
     aht_total = calcular_aht(llamadas_finalizadas)
     aht_total_seg = aht_en_segundos(llamadas_finalizadas)
 
-    # Mostrar resumen total histórico
-    st.markdown(f"**Número total de llamadas:** {num_total}")
-    st.markdown(f"**Average Handle Time (AHT) total:** {aht_total}")
-    st.markdown(f"**AHT total en segundos:** {aht_total_seg}")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("📞 Total llamadas", num_total)
+    col2.metric("⏱️ AHT total", aht_total)
+    col3.metric("🔢 AHT (s) total", aht_total_seg)
 
     registros = []
-    # Preparar lista para mostrar tabla con datos locales y legibles
     for l in llamadas_finalizadas:
         inicio_local = l["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
         fin_local = l["fin"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
@@ -235,9 +233,7 @@ else:  # Vista Registros históricos de llamadas
         })
 
     if registros:
-        # Mostrar tabla con toda la información de registros
         df = pd.DataFrame(registros)
         st.dataframe(df, use_container_width=True)
     else:
-        # Aviso en caso que no haya datos disponibles
         st.info("No hay registros finalizados.")
