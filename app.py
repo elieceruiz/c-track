@@ -112,14 +112,14 @@ if st.session_state["vista"] == "Llamada en curso":
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            if st.button("🔵 Entrada caída", key="btn_caida"):
+            if st.button("🔵", key="btn_caida"):
                 st.session_state["estado_llamada"] = "caida"
                 st.session_state["percepcion_emoji"] = None
         with col2:
-            if st.button("🟡 Llamada normal", key="btn_normal"):
+            if st.button("🟡", key="btn_normal"):
                 st.session_state["estado_llamada"] = "normal"
         with col3:
-            if st.button("🔴 Tuve que finalizarla", key="btn_corte"):
+            if st.button("🔴", key="btn_corte"):
                 st.session_state["estado_llamada"] = "corte"
                 st.session_state["percepcion_emoji"] = None
 
@@ -135,13 +135,13 @@ if st.session_state["vista"] == "Llamada en curso":
             st.write("Seleccione percepción:")
             colf1, colf2, colf3 = st.columns(3)
             with colf1:
-                if st.button("😃 Feliz", key="emoji_feliz"):
+                if st.button("😃", key="emoji_feliz"):
                     st.session_state["percepcion_emoji"] = "feliz"
             with colf2:
-                if st.button("😐 Meh", key="emoji_meh"):
+                if st.button("😐", key="emoji_meh"):
                     st.session_state["percepcion_emoji"] = "meh"
             with colf3:
-                if st.button("😡 Enojado", key="emoji_enojado"):
+                if st.button("😡 ", key="emoji_enojado"):
                     st.session_state["percepcion_emoji"] = "enojado"
             percep = st.session_state["percepcion_emoji"]
             if percep:
