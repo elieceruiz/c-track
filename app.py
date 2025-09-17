@@ -4,16 +4,6 @@ from datetime import datetime, timedelta
 import pytz
 import pandas as pd
 
-# Forzar columnas horizontales con scroll en móvil
-st.markdown("""
-<style>
-[data-testid="stVerticalBlock"] > div {
-    flex-wrap: nowrap !important;
-    overflow-x: auto;
-}
-</style>
-""", unsafe_allow_html=True)
-
 # Zona horaria Colombia
 zona_col = pytz.timezone("America/Bogota")
 
@@ -124,6 +114,7 @@ if st.session_state["vista"] == "Llamada en curso":
         inicio_local = llamada["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
         st.write(f"Llamada iniciada el {inicio_local.strftime('%Y-%m-%d %H:%M:%S')}")
 
+        # Botones estado
         col1, col2, col3 = st.columns([1,1,1], gap="small")
         with col1:
             if st.button("🔵", key="btn_caida"):
@@ -145,6 +136,7 @@ if st.session_state["vista"] == "Llamada en curso":
         elif estado == "corte":
             st.error(f"Estado seleccionado: {estado}")
 
+        # Botones percepción
         if estado in ["normal", "corte"]:
             st.write("Seleccione percepción:")
             colf1, colf2, colf3 = st.columns([1,1,1], gap="small")
