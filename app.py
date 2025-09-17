@@ -10,7 +10,7 @@ zona_col = pytz.timezone("America/Bogota")
 # Config Streamlit
 st.set_page_config(page_title="App Registro de Llamadas", layout="centered")
 
-# Conexión a MongoDB
+# Conexión Mongo
 MONGO_URI = st.secrets["mongo_uri"]
 client = pymongo.MongoClient(MONGO_URI)
 db = client["registro_llamadas_db"]
@@ -120,10 +120,16 @@ if st.session_state["vista"] == "Llamada en curso":
         estado = st.selectbox(
             "Estado de la llamada:",
             options=list(estado_opciones.keys()),
-            index=list(estado_opciones.keys()).index(st.session_state["estado_llamada"]),
             format_func=lambda x: estado_opciones[x],
             key="estado_llamada"
         )
+
+        if estado == "normal":
+            st.success(f"Estado seleccionado: {estado_opciones[estado]}")
+        elif estado == "caida":
+            st.info(f"Estado seleccionado: {estado_opciones[estado]}")
+        elif estado == "corte":
+            st.error(f"Estado seleccionado: {estado_opciones[estado]}")
 
         if estado != "caida":
             percepcion_opciones = {
@@ -134,11 +140,16 @@ if st.session_state["vista"] == "Llamada en curso":
             percepcion = st.selectbox(
                 "Percepción:",
                 options=list(percepcion_opciones.keys()),
-                index=list(percepcion_opciones.keys()).index(st.session_state.get("percepcion_emoji", "feliz")),
                 format_func=lambda x: percepcion_opciones[x],
                 key="percepcion_emoji"
             )
-            st.markdown(f"Emoji seleccionado: {percepcion}")
+
+            if percepcion == "feliz":
+                st.success(f"Emoji seleccionado: {percepcion_opciones[percepcion]}")
+            elif percepcion == "meh":
+                st.info(f"Emoji seleccionado: {percepcion_opciones[percepcion]}")
+            elif percepcion == "enojado":
+                st.error(f"Emoji seleccionado: {percepcion_opciones[percepcion]}")
         else:
             st.info("La percepción no aplica para llamadas de estado 'Caída'")
             st.session_state["percepcion_emoji"] = None
