@@ -16,7 +16,6 @@ client = pymongo.MongoClient(MONGO_URI)
 db = client["registro_llamadas_db"]
 col_llamadas = db["llamadas"]
 
-# Función para formatear duración
 def formatear_duracion(inicio, fin):
     duracion = fin - inicio
     dias = duracion.days
@@ -30,7 +29,6 @@ def formatear_duracion(inicio, fin):
     partes.append(f"{segundos}s")
     return " ".join(partes)
 
-# Calcular Average Handle Time
 def calcular_aht(llamadas):
     if not llamadas:
         return "0h 0m 0s"
@@ -42,7 +40,6 @@ def calcular_aht(llamadas):
     minutos, segundos = divmod(rem, 60)
     return f"{horas}h {minutos}m {segundos}s"
 
-# Inicialización estados session_state
 if "llamada_activa" not in st.session_state:
     st.session_state["llamada_activa"] = None
 if "estado_llamada" not in st.session_state:
@@ -52,7 +49,6 @@ if "percepcion_emoji" not in st.session_state:
 if "vista" not in st.session_state:
     st.session_state["vista"] = "Llamada en curso"
 
-# Iniciar llamada
 def iniciar_llamada():
     if not st.session_state["llamada_activa"]:
         inicio_utc = datetime.utcnow()
@@ -67,7 +63,6 @@ def iniciar_llamada():
         st.session_state["estado_llamada"] = "normal"
         st.session_state["percepcion_emoji"] = None
 
-# Terminar llamada guardando datos
 def terminar_llamada():
     if st.session_state["llamada_activa"]:
         fin_utc = datetime.utcnow()
@@ -83,11 +78,9 @@ def terminar_llamada():
         st.session_state["estado_llamada"] = "normal"
         st.session_state["percepcion_emoji"] = None
 
-# Cambiar vista en dropdown
 def on_vista_change():
     st.session_state["vista"] = st.session_state["sel_vista"]
 
-# Dropdown para seleccionar vista
 vistas = ["Llamada en curso", "Registros"]
 st.selectbox(
     "Seleccione vista:",
@@ -100,7 +93,6 @@ st.selectbox(
 st.title("Registro y Control de Llamadas")
 
 if st.session_state["vista"] == "Llamada en curso":
-    # Resumen del día en módulo 1
     hoy_ini = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     hoy_fin = datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
     llamadas_hoy = list(col_llamadas.find({
@@ -118,7 +110,6 @@ if st.session_state["vista"] == "Llamada en curso":
         inicio_local = llamada["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
         st.write(f"Llamada iniciada el {inicio_local.strftime('%Y-%m-%d %H:%M:%S')}")
 
-        # Botones estado en línea
         col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("🔵 Entrada caída", key="btn_caida"):
@@ -132,7 +123,6 @@ if st.session_state["vista"] == "Llamada en curso":
                 st.session_state["estado_llamada"] = "corte"
                 st.session_state["percepcion_emoji"] = None
 
-        # Mostrar estado seleccionado usando colores de st
         estado = st.session_state["estado_llamada"]
         if estado == "normal":
             st.warning(f"Estado seleccionado: {estado}")
@@ -141,7 +131,6 @@ if st.session_state["vista"] == "Llamada en curso":
         elif estado == "corte":
             st.error(f"Estado seleccionado: {estado}")
 
-        # Mostrar emojis solo si estado es normal o corte
         if estado in ["normal", "corte"]:
             st.write("Seleccione percepción:")
             colf1, colf2, colf3 = st.columns(3)
@@ -158,15 +147,14 @@ if st.session_state["vista"] == "Llamada en curso":
             if percep:
                 st.markdown(f"Emoji seleccionado: {percep}")
 
-        # Terminar llamada si estado definido
         if estado:
             if st.button("Terminar llamada", key="btn_terminar"):
                 terminar_llamada()
-                st.experimental_rerun()
+                st.rerun()
     else:
         if st.button("Iniciar llamada"):
             iniciar_llamada()
-            st.experimental_rerun()
+            st.rerun()
 
     st.markdown("---")
     st.markdown("""
@@ -176,7 +164,6 @@ if st.session_state["vista"] == "Llamada en curso":
     🔴 Tuve que finalizarla: llamada que cortó usted o por inconveniente  
     """)
 else:
-    # Vista registros históricos
     st.subheader("Registros históricos de llamadas")
 
     hoy_inicio = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -186,7 +173,6 @@ else:
         "fin": {"$ne": None}
     }))
 
-    # Mostrar resumen AHT y número llamadas hoy
     num_llamadas = len(llamadas_hoy)
     aht = calcular_aht(llamadas_hoy)
 
