@@ -1,6 +1,6 @@
 import streamlit as st
 import pymongo
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, UTC
 import pytz
 import pandas as pd
 
@@ -53,7 +53,7 @@ def aht_en_segundos(llamadas):
 
 def iniciar_llamada():
     if not st.session_state["llamada_activa"]:
-        inicio_utc = datetime.utcnow()
+        inicio_utc = datetime.now(UTC)
         llamada = {
             "inicio": inicio_utc,
             "fin": None,
@@ -67,7 +67,7 @@ def iniciar_llamada():
 
 def terminar_llamada():
     if st.session_state["llamada_activa"]:
-        fin_utc = datetime.utcnow()
+        fin_utc = datetime.now(UTC)
         col_llamadas.update_one(
             {"_id": st.session_state["llamada_activa"]},
             {"$set": {
@@ -234,6 +234,6 @@ else:
 
     if registros:
         df = pd.DataFrame(registros)
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width="stretch")   # ✅ corrección aquí
     else:
         st.info("No hay registros finalizados.")
