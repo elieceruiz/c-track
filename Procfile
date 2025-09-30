@@ -1,0 +1,1 @@
+release: ./postinstall.sh
