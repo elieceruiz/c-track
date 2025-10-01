@@ -8,6 +8,7 @@ const MyKeyListener = () => {
   useEffect(() => {
     const onKeyDown = (event) => {
       Streamlit.setComponentValue(event.key);
+      console.log("Tecla detectada:", event.key); // Debug en consola
     };
     const divCurrent = divRef.current;
     // Poner foco para capturar teclado
@@ -17,12 +18,18 @@ const MyKeyListener = () => {
     // Ajustar iframe height
     Streamlit.setFrameHeight();
 
-    // Forzar foco tras cada render (por dropdowns)
-    const handleFocus = () => divCurrent?.focus();
+    // Forzar foco tras clics o toques
+    const handleFocus = () => {
+      divCurrent?.focus();
+      console.log("Foco forzado al div"); // Debug en consola
+    };
     document.addEventListener("click", handleFocus);
+    document.addEventListener("touchstart", handleFocus); // Soporte móvil
+
     return () => {
       divCurrent?.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("click", handleFocus);
+      document.removeEventListener("touchstart", handleFocus);
     };
   }, []);
 
