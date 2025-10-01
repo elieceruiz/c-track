@@ -1,39 +1,26 @@
 // my_key_listener/frontend/src/MyKeyListener.jsx
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Streamlit, withStreamlitConnection } from "streamlit-component-lib";
 
 const MyKeyListener = () => {
+  const divRef = useRef(null);
+
   useEffect(() => {
     const onKeyDown = (event) => {
-      const target = event.target;
-
-      // No molestar si escribe en inputs, textareas o campos editables
-      const isEditable =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.isContentEditable;
-
-      if (isEditable) return;
-
-      // Solo capturar ciertas teclas
-      const allowedKeys = ["Delete", "Shift", "Escape", "ArrowUp", "ArrowDown"];
-      if (!allowedKeys.includes(event.key)) return;
-
-      // Enviar la tecla a Streamlit
       Streamlit.setComponentValue(event.key);
-      console.log("Tecla detectada:", event.key);
     };
-
-    document.addEventListener("keydown", onKeyDown);
+    const divCurrent = divRef.current;
+    // Poner foco para capturar teclado
+    divCurrent?.focus();
+    // Agregar listener
+    divCurrent?.addEventListener("keydown", onKeyDown);
+    // Ajustar iframe height
     Streamlit.setFrameHeight();
 
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-    };
+    return () => divCurrent?.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // No necesitas div con foco aquí
-  return <div style={{ outline: "none" }}></div>;
+  return <div ref={divRef} tabIndex={0} style={{ outline: "none" }}></div>;
 };
 
 export default withStreamlitConnection(MyKeyListener);
