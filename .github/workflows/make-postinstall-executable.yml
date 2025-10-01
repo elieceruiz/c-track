@@ -1,0 +1,20 @@
+name: Make postinstall executable
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  set-executable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Make postinstall.sh executable
+        run: chmod +x postinstall.sh
+
+      - name: Verify permissions
+        run: ls -l postinstall.sh
