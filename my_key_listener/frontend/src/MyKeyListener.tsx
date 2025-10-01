@@ -1,3 +1,4 @@
+// my_key_listener/frontend/src/MyKeyListener.tsx
 import React, { useEffect } from "react"
 import { Streamlit, withStreamlitConnection } from "streamlit-component-lib"
 
@@ -10,7 +11,7 @@ const MyKeyListener = () => {
     return () => document.removeEventListener("keydown", handler)
   }, [])
 
-  return <div>🎹 Presiona una tecla…</div>
+  return <div></div>  // Quitamos el texto y dejamos el div vacío
 }
 
 export default withStreamlitConnection(MyKeyListener)
