@@ -170,6 +170,7 @@ if st.session_state["vista"] == "Llamada en curso":
 
     # Detectar tecla
     key = my_key_listener(key="listener")
+    st.write(f"Tecla detectada: {key}")  # Debug para ver si capta la tecla
 
     # Lógica de teclas
     if key != st.session_state.last_key:  # Evitar repeticiones rápidas
