@@ -1,39 +1,45 @@
 // my_key_listener/frontend/src/MyKeyListener.tsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { Streamlit, withStreamlitConnection } from "streamlit-component-lib";
 
-const MyKeyListener = () => {
-  const divRef = useRef(null);
-
+const MyKeyListener: React.FC = () => {
   useEffect(() => {
-    const onKeyDown = (event) => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+
+      // Ignorar si el foco está en inputs, textareas o elementos editables
+      const isEditable =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+
+      if (isEditable) return;
+
+      // Definir qué teclas escuchar
+      const allowedKeys: string[] = [
+        "Delete",
+        "Shift",
+        "Escape",
+        "ArrowUp",
+        "ArrowDown",
+      ];
+
+      if (!allowedKeys.includes(event.key)) return;
+
+      // Enviar valor a Streamlit
       Streamlit.setComponentValue(event.key);
-      console.log("Tecla detectada:", event.key); // Debug en consola
+      console.log("Tecla detectada:", event.key);
     };
-    const divCurrent = divRef.current;
-    // Poner foco para capturar teclado
-    divCurrent?.focus();
-    // Agregar listener
-    divCurrent?.addEventListener("keydown", onKeyDown);
-    // Ajustar iframe height
+
+    document.addEventListener("keydown", onKeyDown);
     Streamlit.setFrameHeight();
 
-    // Forzar foco tras clics o toques
-    const handleFocus = () => {
-      divCurrent?.focus();
-      console.log("Foco forzado al div"); // Debug en consola
-    };
-    document.addEventListener("click", handleFocus);
-    document.addEventListener("touchstart", handleFocus); // Soporte móvil
-
     return () => {
-      divCurrent?.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("click", handleFocus);
-      document.removeEventListener("touchstart", handleFocus);
+      document.removeEventListener("keydown", onKeyDown);
     };
   }, []);
 
-  return <div ref={divRef} tabIndex={0} style={{ outline: "none" }}></div>;
+  return <div style={{ outline: "none" }} />;
 };
 
 export default withStreamlitConnection(MyKeyListener);
