@@ -174,7 +174,7 @@ if st.session_state["vista"] == "Llamada en curso":
 
     st.divider()
     st.subheader("🎛️ Control rápido")
-    st.caption("**Instrucciones:** Usa `Supr/Delete` para iniciar una llamada y `Mayús/Shift` para terminar. Maniobra con teclado y, como último recurso (y eso en ausencia de teclado): usa el botón con tap o clic")
+    st.caption("**Instrucciones:** Usa `Supr/Delete` para iniciar una llamada y `Mayús/Shift` para terminar. Maniobra con teclado y, como último recurso (y eso en ausencia de teclado): usa el botón con tap o clic.")
 
     # Detectar tecla
     key = my_key_listener(key="listener")
