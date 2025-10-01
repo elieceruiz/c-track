@@ -10,7 +10,7 @@ const MyKeyListener = () => {
     return () => document.removeEventListener("keydown", handler)
   }, [])
 
-  return <div>🎹 Presiona una tecla…</div>
+  return <div></div>
 }
 
 export default withStreamlitConnection(MyKeyListener)
