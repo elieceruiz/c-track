@@ -1,0 +1,35 @@
+name: Build frontend
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write   # 👈 habilita push desde github-actions[bot]
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install and build frontend
+        run: |
+          cd my_key_listener/frontend
+          npm install
+          npm run build
+
+      - name: Commit dist folder
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add my_key_listener/frontend/dist
+          git commit -m "Build frontend dist" || echo "No changes to commit"
+          git push
