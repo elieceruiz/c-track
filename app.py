@@ -176,6 +176,14 @@ if st.session_state["vista"] == "Llamada en curso":
     st.subheader("🎛️ Control rápido")
     st.caption("**Instrucciones:** Usa `Delete` (Supr) para iniciar una llamada. Usa `Shift` (Mayús) para terminar. O usa el botón único.")
 
+    # Botón único con texto dinámico y emojis
+    button_text = "✅ Iniciar [Supr/Del]" if not st.session_state.get("llamada_activa") else "❌ Terminar [Mayús/Shift]"
+    if st.button(button_text):
+        if not st.session_state.get("llamada_activa"):
+            iniciar_llamada()
+        else:
+            terminar_llamada()
+
     # Detectar tecla
     key = my_key_listener(key="listener")
     st.write(f"Tecla detectada: {key}")  # Debug
@@ -195,14 +203,6 @@ if st.session_state["vista"] == "Llamada en curso":
             else:
                 reset_timer()
             st.rerun()
-
-    # Botón único con texto dinámico y emojis
-    button_text = "✅ Iniciar [Supr/Del]" if not st.session_state.get("llamada_activa") else "❌ Terminar [Mayús/Shift]"
-    if st.button(button_text):
-        if not st.session_state.get("llamada_activa"):
-            iniciar_llamada()
-        else:
-            terminar_llamada()
 
     if st.session_state["llamada_activa"]:
         llamada = col_llamadas.find_one({"_id": st.session_state["llamada_activa"]})
