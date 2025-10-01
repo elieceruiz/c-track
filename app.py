@@ -69,7 +69,7 @@ def iniciar_llamada():
         st.session_state["percepcion_emoji"] = "feliz"
         st.session_state.running = True
         st.session_state.start_time = time.time()
-        st.success("Llamada iniciada con Delete — ¡buena suerte! 🎧")
+        st.success("Llamada iniciada — ¡buena suerte! 🎧")
         st.rerun()
 
 def terminar_llamada():
@@ -87,7 +87,7 @@ def terminar_llamada():
         st.session_state.running = False
         st.session_state.elapsed_time = 0.0
         st.session_state.start_time = 0.0
-        st.success("Llamada finalizada con Shift ✅")
+        st.success("Llamada finalizada ✅")
         st.rerun()
 
 def on_vista_change():
@@ -174,7 +174,7 @@ if st.session_state["vista"] == "Llamada en curso":
 
     st.divider()
     st.subheader("🎛️ Control rápido")
-    st.caption("**Instrucciones:** Usa `Delete` para iniciar una llamada. Usa `Shift` para terminar. Selecciona estado y percepción durante la llamada.")
+    st.caption("**Instrucciones:** Usa `Delete` (Supr) para iniciar una llamada. Usa `Shift` (Mayús) para terminar. O usa el botón único.")
 
     # Detectar tecla
     key = my_key_listener(key="listener")
@@ -196,22 +196,13 @@ if st.session_state["vista"] == "Llamada en curso":
                 reset_timer()
             st.rerun()
 
-    # Botones para control (opcional)
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Iniciar (Delete)", use_container_width=True):
-            if not st.session_state.get("llamada_activa"):
-                iniciar_llamada()
-            else:
-                start_timer()
-            st.rerun()
-    with col2:
-        if st.button("Terminar (Shift)", use_container_width=True):
-            if st.session_state.get("llamada_activa"):
-                terminar_llamada()
-            else:
-                reset_timer()
-            st.rerun()
+    # Botón único con texto dinámico y emojis
+    button_text = "✅ Iniciar [Supr/Del]" if not st.session_state.get("llamada_activa") else "❌ Terminar [Mayús/Shift]"
+    if st.button(button_text):
+        if not st.session_state.get("llamada_activa"):
+            iniciar_llamada()
+        else:
+            terminar_llamada()
 
     if st.session_state["llamada_activa"]:
         llamada = col_llamadas.find_one({"_id": st.session_state["llamada_activa"]})
@@ -258,10 +249,6 @@ if st.session_state["vista"] == "Llamada en curso":
         st.success("Estado: Corriendo")
     else:
         st.error("Estado: Detenido")
-
-    # Emoji para feedback visual
-    emoji = "🏃‍♂️" if st.session_state.running else "🛑"
-    st.markdown(f"## {emoji}")
 
     # Actualización automática
     if st.session_state.running:
