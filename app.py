@@ -140,8 +140,8 @@ if st.session_state["vista"] == "Llamada en curso":
 
     # Definir rango del día actual
     fecha_hoy = datetime.now(zona_col).date()
-    hoy_ini = zona_col.localize(datetime.combine(fecha_hoy, time(0, 0)))  # Medianoche
-    hoy_fin = zona_col.localize(datetime.combine(fecha_hoy, time(23, 59, 59)))  # Fin del día
+    hoy_ini = zona_col.localize(datetime(fecha_hoy.year, fecha_hoy.month, fecha_hoy.day, 0, 0, 0))  # Medianoche
+    hoy_fin = zona_col.localize(datetime(fecha_hoy.year, fecha_hoy.month, fecha_hoy.day, 23, 59, 59))  # Fin del día
 
     llamadas_hoy = list(col_llamadas.find({
         "inicio": {"$gte": hoy_ini, "$lte": hoy_fin},
