@@ -17,7 +17,14 @@ const MyKeyListener = () => {
     // Ajustar iframe height
     Streamlit.setFrameHeight();
 
-    return () => divCurrent?.removeEventListener("keydown", onKeyDown);
+    // Forzar foco tras clics para recuperar control después de dropdowns
+    const handleFocus = () => divCurrent?.focus();
+    document.addEventListener("click", handleFocus);
+
+    return () => {
+      divCurrent?.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("click", handleFocus);
+    };
   }, []);
 
   return <div ref={divRef} tabIndex={0} style={{ outline: "none" }}></div>;
