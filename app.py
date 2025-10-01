@@ -174,7 +174,7 @@ if st.session_state["vista"] == "Llamada en curso":
 
     st.divider()
     st.subheader("🎛️ Control rápido")
-    st.caption("**Instrucciones:** Usa `Delete` (Supr) para iniciar una llamada. Usa `Shift` (Mayús) para terminar. O usa el botón único.")
+    st.caption("**Instrucciones:** Usa `Supr/Delete` para iniciar una llamada. Usa `Mayús/Shift` para terminar. O usa el botón único.")
 
     # Botón único con texto dinámico y emojis
     button_text = "✅ Iniciar [Supr/Del]" if not st.session_state.get("llamada_activa") else "❌ Terminar [Mayús/Shift]"
