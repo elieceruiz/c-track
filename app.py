@@ -69,6 +69,7 @@ def iniciar_llamada():
         st.session_state["percepcion_emoji"] = "feliz"
         st.session_state.running = True
         st.session_state.start_time = time.time()
+        st.success("Llamada iniciada con Delete — ¡buena suerte! 🎧")
         st.rerun()
 
 def terminar_llamada():
@@ -86,6 +87,7 @@ def terminar_llamada():
         st.session_state.running = False
         st.session_state.elapsed_time = 0.0
         st.session_state.start_time = 0.0
+        st.success("Llamada finalizada con Shift ✅")
         st.rerun()
 
 def on_vista_change():
@@ -112,7 +114,6 @@ def reset_timer():
     st.session_state.running = False
     st.session_state.elapsed_time = 0.0
     st.session_state.start_time = 0.0
-    return st.session_state.elapsed_time + (time.time() - st.session_state.start_time) if st.session_state.running else st.session_state.elapsed_time
 
 # ---------------------------
 # Valores iniciales
@@ -173,39 +174,43 @@ if st.session_state["vista"] == "Llamada en curso":
 
     st.divider()
     st.subheader("🎛️ Control rápido")
-    st.caption("**Instrucciones:** Usa `Delete` para iniciar o el botón abajo. Usa `Shift` o el botón para terminar. Selecciona estado y percepción durante la llamada.")
+    st.caption("**Instrucciones:** Usa `Delete` para iniciar una llamada. Usa `Shift` para terminar. Selecciona estado y percepción durante la llamada.")
 
     # Detectar tecla
     key = my_key_listener(key="listener")
+    st.write(f"Tecla detectada: {key}")  # Debug
 
     # Lógica de teclas
-    if key != st.session_state.last_key:  # Evitar repeticiones rápidas
+    if key != st.session_state.last_key:
         st.session_state.last_key = key
         if key == "Delete":
-            start_timer()
             if not st.session_state.get("llamada_activa"):
                 iniciar_llamada()
+            else:
+                start_timer()
             st.rerun()
         elif key == "Shift":
-            tiempo_llamada = reset_timer()
-            if st.session_state.get("llamada_activa") and tiempo_llamada > 0:
+            if st.session_state.get("llamada_activa"):
                 terminar_llamada()
+            else:
+                reset_timer()
             st.rerun()
 
-    # Botones para control
+    # Botones para control (opcional)
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Iniciar (Delete)", use_container_width=True):
-            start_timer()
             if not st.session_state.get("llamada_activa"):
                 iniciar_llamada()
+            else:
+                start_timer()
             st.rerun()
     with col2:
         if st.button("Terminar (Shift)", use_container_width=True):
-            tiempo_llamada = reset_timer()
-            st.write(f"Debug - Tiempo: {tiempo_llamada}, ID: {st.session_state.get('llamada_activa')}")
-            if st.session_state.get("llamada_activa") and tiempo_llamada > 0:
+            if st.session_state.get("llamada_activa"):
                 terminar_llamada()
+            else:
+                reset_timer()
             st.rerun()
 
     if st.session_state["llamada_activa"]:
@@ -253,9 +258,6 @@ if st.session_state["vista"] == "Llamada en curso":
         st.success("Estado: Corriendo")
     else:
         st.error("Estado: Detenido")
-
-    # Mostrar última tecla detectada
-    st.write("Última tecla:", key if key else "Ninguna")
 
     # Emoji para feedback visual
     emoji = "🏃‍♂️" if st.session_state.running else "🛑"
