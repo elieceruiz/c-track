@@ -1,45 +1,17 @@
 // my_key_listener/frontend/src/MyKeyListener.tsx
-import React, { useEffect } from "react";
-import { Streamlit, withStreamlitConnection } from "streamlit-component-lib";
+import React, { useEffect } from "react"
+import { Streamlit, withStreamlitConnection } from "streamlit-component-lib"
 
-const MyKeyListener: React.FC = () => {
+const MyKeyListener = () => {
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement;
+    const handler = (e: KeyboardEvent) => {
+      Streamlit.setComponentValue(e.key)  // devuelve la tecla
+    }
+    document.addEventListener("keydown", handler)
+    return () => document.removeEventListener("keydown", handler)
+  }, [])
 
-      // Ignorar si el foco está en inputs, textareas o elementos editables
-      const isEditable =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.isContentEditable;
+  return <div></div>
+}
 
-      if (isEditable) return;
-
-      // Definir qué teclas escuchar
-      const allowedKeys: string[] = [
-        "Delete",
-        "Shift",
-        "Escape",
-        "ArrowUp",
-        "ArrowDown",
-      ];
-
-      if (!allowedKeys.includes(event.key)) return;
-
-      // Enviar valor a Streamlit
-      Streamlit.setComponentValue(event.key);
-      console.log("Tecla detectada:", event.key);
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-    Streamlit.setFrameHeight();
-
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, []);
-
-  return <div style={{ outline: "none" }} />;
-};
-
-export default withStreamlitConnection(MyKeyListener);
+export default withStreamlitConnection(MyKeyListener)
