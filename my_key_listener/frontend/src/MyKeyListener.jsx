@@ -1,3 +1,4 @@
+// my_key_listener/frontend/src/MyKeyListener.jsx
 import React, { useEffect, useRef } from "react";
 import { Streamlit, withStreamlitConnection } from "streamlit-component-lib";
 
@@ -19,9 +20,7 @@ const MyKeyListener = () => {
     return () => divCurrent?.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  return <div ref={divRef} tabIndex={0} style={{ outline: "none" }}>
-    Presiona una tecla...
-  </div>;
+  return <div ref={divRef} tabIndex={0} style={{ outline: "none" }}></div>;
 };
 
 export default withStreamlitConnection(MyKeyListener);
