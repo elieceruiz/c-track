@@ -170,11 +170,12 @@ if st.session_state["vista"] == "Llamada en curso":
 
     # Detectar tecla
     key = my_key_listener(key="listener")
-    st.write(f"Tecla detectada: {key}")  # Debug para ver si capta la tecla
+    st.write(f"Tecla detectada (raw): {key}")  # Debug más detallado
 
     # Lógica de teclas
-    if key != st.session_state.last_key:  # Evitar repeticiones rápidas
+    if key and key != st.session_state.last_key:  # Verificar que key no sea None
         st.session_state.last_key = key
+        st.write(f"Procesando tecla: {key}")  # Debug adicional
         if key == "Delete":  # Delete inicia el cronómetro
             start_timer()
             st.rerun()
@@ -253,7 +254,7 @@ if st.session_state["vista"] == "Llamada en curso":
         st.error("Estado: Detenido")
 
     # Mostrar última tecla detectada
-    st.write("Última tecla:", key if key else "Ninguna")
+    st.write("Última tecla procesada:", st.session_state.last_key if st.session_state.last_key else "Ninguna")
 
     # Emoji para feedback visual
     emoji = "🏃‍♂️" if st.session_state.running else "🛑"
