@@ -1,7 +1,7 @@
 # app.py
 import streamlit as st
 import pymongo
-from datetime import datetime, time, timedelta, UTC
+from datetime import datetime, timedelta, UTC
 import pytz
 import pandas as pd
 from my_key_listener import my_key_listener
@@ -138,6 +138,9 @@ if st.session_state["vista"] == "Llamada en curso":
     st.title("📲 CallBoard")
     st.caption("Registro y control de llamadas — métricas claras y acciones rápidas")
 
+    # Instrucciones
+    st.caption("**Instrucciones:** Usa `Delete` para iniciar una llamada o el botón abajo. Usa `Shift` o el botón para terminar. Selecciona estado y percepción durante la llamada.")
+
     # Definir rango del día actual
     fecha_hoy = datetime.now(zona_col).date()
     hoy_ini = zona_col.localize(datetime(fecha_hoy.year, fecha_hoy.month, fecha_hoy.day, 0, 0, 0))  # Medianoche
@@ -182,6 +185,21 @@ if st.session_state["vista"] == "Llamada en curso":
                 terminar_llamada()
                 st.success("Llamada finalizada con Shift ✅")
                 st.rerun()
+
+    # Botón para iniciar/terminar llamada
+    if st.session_state["llamada_activa"]:
+        if st.button("Terminar llamada"):
+            tiempo_llamada = reset_timer()
+            if tiempo_llamada > 0:
+                terminar_llamada()
+                st.success("Llamada finalizada con botón ✅")
+                st.rerun()
+    else:
+        if st.button("Iniciar llamada"):
+            iniciar_llamada()
+            start_timer()
+            st.success("Llamada iniciada con botón — ¡buena suerte! 🎧")
+            st.rerun()
 
     if st.session_state["llamada_activa"]:
         llamada = col_llamadas.find_one({"_id": st.session_state["llamada_activa"]})
