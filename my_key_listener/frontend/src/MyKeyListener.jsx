@@ -19,9 +19,7 @@ const MyKeyListener = () => {
     return () => divCurrent?.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  return <div ref={divRef} tabIndex={0} style={{ outline: "none" }}>
-    Presiona una tecla...
-  </div>;
+  return <div ref={divRef} tabIndex={0} style={{ outline: "none" }}></div>;
 };
 
 export default withStreamlitConnection(MyKeyListener);
