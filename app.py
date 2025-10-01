@@ -308,3 +308,5 @@ else:
         st.dataframe(df, width="stretch")   # ✅ corrección aquí
     else:
         st.info("No hay registros finalizados.")
+
+# Probando branch
