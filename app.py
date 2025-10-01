@@ -4,8 +4,8 @@ import pymongo
 from datetime import datetime, timedelta, UTC
 import pytz
 import pandas as pd
-from my_key_listener import my_key_listener
 import time
+from my_key_listener import my_key_listener
 
 # ---------------------------
 # Configuración inicial
@@ -55,7 +55,7 @@ def aht_en_segundos(llamadas):
     return segundos
 
 def iniciar_llamada():
-    if not st.session_state["llamada_activa"]:
+    if not st.session_state.get("llamada_activa"):
         inicio_utc = datetime.now(UTC)
         llamada = {
             "inicio": inicio_utc,
@@ -67,9 +67,12 @@ def iniciar_llamada():
         st.session_state["llamada_activa"] = result.inserted_id
         st.session_state["estado_llamada"] = "normal"
         st.session_state["percepcion_emoji"] = "feliz"
+        st.session_state.running = True
+        st.session_state.start_time = time.time()
+        st.rerun()
 
 def terminar_llamada():
-    if st.session_state["llamada_activa"]:
+    if st.session_state.get("llamada_activa"):
         fin_utc = datetime.now(UTC)
         col_llamadas.update_one(
             {"_id": st.session_state["llamada_activa"]},
@@ -80,24 +83,28 @@ def terminar_llamada():
             }}
         )
         st.session_state["llamada_activa"] = None
+        st.session_state.running = False
+        st.session_state.elapsed_time = 0.0
+        st.session_state.start_time = 0.0
+        st.rerun()
 
 def on_vista_change():
     st.session_state["vista"] = st.session_state["sel_vista"]
 
 # ---------------------------
-# Funciones del Teclonómetro (basado en tu código)
+# Funciones del Teclonómetro
 # ---------------------------
 if "running" not in st.session_state:
-    st.session_state.running = False  # Cronómetro detenido inicialmente
+    st.session_state.running = False
 if "start_time" not in st.session_state:
-    st.session_state.start_time = 0.0  # Tiempo de inicio
+    st.session_state.start_time = 0.0
 if "elapsed_time" not in st.session_state:
-    st.session_state.elapsed_time = 0.0  # Tiempo acumulado
+    st.session_state.elapsed_time = 0.0
 if "last_key" not in st.session_state:
-    st.session_state.last_key = None  # Última tecla detectada
+    st.session_state.last_key = None
 
 def start_timer():
-    if not st.session_state.running:  # Solo iniciar si no está corriendo
+    if not st.session_state.running:
         st.session_state.start_time = time.time()
         st.session_state.running = True
 
@@ -140,8 +147,8 @@ if st.session_state["vista"] == "Llamada en curso":
 
     # Definir rango del día actual
     fecha_hoy = datetime.now(zona_col).date()
-    hoy_ini = zona_col.localize(datetime(fecha_hoy.year, fecha_hoy.month, fecha_hoy.day, 0, 0, 0))  # Medianoche
-    hoy_fin = zona_col.localize(datetime(fecha_hoy.year, fecha_hoy.month, fecha_hoy.day, 23, 59, 59))  # Fin del día
+    hoy_ini = zona_col.localize(datetime(fecha_hoy.year, fecha_hoy.month, fecha_hoy.day, 0, 0, 0))
+    hoy_fin = zona_col.localize(datetime(fecha_hoy.year, fecha_hoy.month, fecha_hoy.day, 23, 59, 59))
 
     llamadas_hoy = list(col_llamadas.find({
         "inicio": {"$gte": hoy_ini, "$lte": hoy_fin},
@@ -159,46 +166,46 @@ if st.session_state["vista"] == "Llamada en curso":
     col3.metric("🔢 AHT (s)", aht_seg)
 
     # Barra de progreso contra meta
-    objetivo_seg = 300  # meta de ejemplo
+    objetivo_seg = 300
     progreso = min(1.0, aht_seg / objetivo_seg) if objetivo_seg > 0 else 0
     st.progress(progreso)
     st.caption(f"Progreso AHT vs objetivo ({objetivo_seg}s)")
 
     st.divider()
     st.subheader("🎛️ Control rápido")
-    st.caption("**Instrucciones:** Usa `Delete` para iniciar una llamada o el botón abajo. Usa `Shift` o el botón para terminar. Selecciona estado y percepción durante la llamada.")
+    st.caption("**Instrucciones:** Usa `Delete` para iniciar o el botón abajo. Usa `Shift` o el botón para terminar. Selecciona estado y percepción durante la llamada.")
 
     # Detectar tecla
     key = my_key_listener(key="listener")
-    st.write(f"Tecla detectada (raw): {key}")  # Debug más detallado
 
     # Lógica de teclas
-    if key and key != st.session_state.last_key:  # Verificar que key no sea None
+    if key != st.session_state.last_key:  # Evitar repeticiones rápidas
         st.session_state.last_key = key
-        st.write(f"Procesando tecla: {key}")  # Debug adicional
-        if key == "Delete":  # Delete inicia el cronómetro
+        if key == "Delete":
             start_timer()
+            if not st.session_state.get("llamada_activa"):
+                iniciar_llamada()
             st.rerun()
-        elif key == "Shift":  # Shift reinicia y detiene
+        elif key == "Shift":
             tiempo_llamada = reset_timer()
-            if st.session_state["llamada_activa"] and tiempo_llamada > 0:
+            if st.session_state.get("llamada_activa") and tiempo_llamada > 0:
                 terminar_llamada()
-                st.success("Llamada finalizada con Shift ✅")
-                st.rerun()
+            st.rerun()
 
-    # Botón para iniciar/terminar llamada
-    if st.session_state["llamada_activa"]:
-        if st.button("Terminar llamada"):
-            tiempo_llamada = reset_timer()
-            if tiempo_llamada > 0:
-                terminar_llamada()
-                st.success("Llamada finalizada con botón ✅")
-                st.rerun()
-    else:
-        if st.button("Iniciar llamada"):
-            iniciar_llamada()
+    # Botones para control
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Iniciar (Delete)", use_container_width=True):
             start_timer()
-            st.success("Llamada iniciada con botón — ¡buena suerte! 🎧")
+            if not st.session_state.get("llamada_activa"):
+                iniciar_llamada()
+            st.rerun()
+    with col2:
+        if st.button("Terminar (Shift)", use_container_width=True):
+            tiempo_llamada = reset_timer()
+            st.write(f"Debug - Tiempo: {tiempo_llamada}, ID: {st.session_state.get('llamada_activa')}")
+            if st.session_state.get("llamada_activa") and tiempo_llamada > 0:
+                terminar_llamada()
             st.rerun()
 
     if st.session_state["llamada_activa"]:
@@ -207,7 +214,7 @@ if st.session_state["vista"] == "Llamada en curso":
             inicio_local = llamada["inicio"].replace(tzinfo=pytz.UTC).astimezone(zona_col)
             st.write(f"🔔 Llamada iniciada: **{inicio_local.strftime('%Y-%m-%d %H:%M:%S')}**")
 
-        # Estado y percepción (solo si hay llamada activa)
+        # Estado y percepción
         estado = st.selectbox(
             "Estado:",
             options=["caida", "normal", "corte"],
@@ -225,12 +232,6 @@ if st.session_state["vista"] == "Llamada en curso":
                 format_func=lambda x: {"feliz": "😃 Feliz", "meh": "😐 Meh", "enojado": "😡 Enojado"}[x],
                 key="percepcion_emoji"
             )
-    else:
-        # Iniciar llamada con Delete
-        if not st.session_state["llamada_activa"] and key == "Delete":
-            iniciar_llamada()
-            st.success("Llamada iniciada con Delete — ¡buena suerte! 🎧")
-            st.rerun()
 
     # Calcular tiempo transcurrido
     if st.session_state.running:
@@ -238,7 +239,7 @@ if st.session_state["vista"] == "Llamada en curso":
     else:
         current_time = st.session_state.elapsed_time
 
-    # Formatear tiempo como HH:MM:SS
+    # Formatear tiempo
     hours = int(current_time // 3600)
     minutes = int((current_time % 3600) // 60)
     seconds = int(current_time % 60)
@@ -254,15 +255,15 @@ if st.session_state["vista"] == "Llamada en curso":
         st.error("Estado: Detenido")
 
     # Mostrar última tecla detectada
-    st.write("Última tecla procesada:", st.session_state.last_key if st.session_state.last_key else "Ninguna")
+    st.write("Última tecla:", key if key else "Ninguna")
 
     # Emoji para feedback visual
     emoji = "🏃‍♂️" if st.session_state.running else "🛑"
     st.markdown(f"## {emoji}")
 
-    # Actualización automática solo si está corriendo
+    # Actualización automática
     if st.session_state.running:
-        time.sleep(0.1)  # Pausa para evitar reruns demasiado rápidos
+        time.sleep(0.1)
         st.rerun()
 
     st.divider()
@@ -324,6 +325,6 @@ else:
 
     if registros:
         df = pd.DataFrame(registros)
-        st.dataframe(df, width="stretch")   # ✅ corrección aquí
+        st.dataframe(df, width="stretch")
     else:
         st.info("No hay registros finalizados.")
