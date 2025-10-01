@@ -138,9 +138,6 @@ if st.session_state["vista"] == "Llamada en curso":
     st.title("📲 CallBoard")
     st.caption("Registro y control de llamadas — métricas claras y acciones rápidas")
 
-    # Instrucciones
-    st.caption("**Instrucciones:** Usa `Delete` para iniciar una llamada o el botón abajo. Usa `Shift` o el botón para terminar. Selecciona estado y percepción durante la llamada.")
-
     # Definir rango del día actual
     fecha_hoy = datetime.now(zona_col).date()
     hoy_ini = zona_col.localize(datetime(fecha_hoy.year, fecha_hoy.month, fecha_hoy.day, 0, 0, 0))  # Medianoche
@@ -169,6 +166,7 @@ if st.session_state["vista"] == "Llamada en curso":
 
     st.divider()
     st.subheader("🎛️ Control rápido")
+    st.caption("**Instrucciones:** Usa `Delete` para iniciar una llamada o el botón abajo. Usa `Shift` o el botón para terminar. Selecciona estado y percepción durante la llamada.")
 
     # Detectar tecla
     key = my_key_listener(key="listener")
