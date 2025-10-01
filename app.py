@@ -1,3 +1,4 @@
+# app.py
 import streamlit as st
 import pymongo
 from datetime import datetime, time, timedelta, UTC
@@ -308,5 +309,3 @@ else:
         st.dataframe(df, width="stretch")   # ✅ corrección aquí
     else:
         st.info("No hay registros finalizados.")
-
-# Probando branch
